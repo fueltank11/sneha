@@ -1,0 +1,162 @@
+Aim: Installing and setting environment variables for Working with Apache Hadoop
+
+sudo apt install openjdk-8-jre
+
+sudo apt install openjdk-8-jdk
+
+java -version
+
+sudo adduser hadoop
+
+sudo usermod -aG sudo hadoop
+
+sudo apt install openssh-server openssh-client -y
+
+sudo su - hadoop                         (type this command with hands)
+
+ssh-keygen -t rsa
+
+sudo cat ~/.ssh/id_rsa.pub >> ~/.ssh/authorized_keys
+
+sudo chmod 640 ~/.ssh/authorized_keys
+
+ssh localhost                                                         if asked permission - yes
+
+
+
+
+
+HADOOP INSTALLATION
+
+wget https://archive.apache.org/dist/hadoop/core/hadoop-3.1.1/hadoop-3.1.1.tar.gz
+
+tar -xvzf hadoop-3.1.1.tar.gz
+
+sudo mv hadoop-3.1.1 /usr/local/hadoop
+
+sudo mkdir /usr/local/hadoop/logs
+
+sudo chown -R hadoop:hadoop /usr/local/hadoop
+
+sudo nano ~/.bashrc
+after above command a file will open , add below code at bottom of that file,   ctrl+O, enter - to save   and ctrl+X to exit,
+
+export JAVA_HOME=/usr/lib/jvm/java-8-openjdk-amd64
+export HADOOP_HOME=/usr/local/hadoop
+export HADOOP_INSTALL=$HADOOP_HOME
+export HADOOP_MAPRED_HOME=$HADOOP_HOME
+export HADOOP_COMMON_HOME=$HADOOP_HOME
+export HADOOP_HDFS_HOME=$HADOOP_HOME
+export YARN_HOME=$HADOOP_HOME
+export HADOOP_COMMON_LIB_NATIVE_DIR=$HADOOP_HOME/lib/native
+export PATH=$PATH:$HADOOP_HOME/sbin:$HADOOP_HOME/bin
+export HADOOP_OPTS="-Djava.library.path=$HADOOP_HOME/lib/native"
+
+save this and exit and follow below commands,
+
+source ~/.bashrc
+
+which javac
+
+readlink -f /usr/bin/javac
+
+sudo nano $HADOOP_HOME/etc/hadoop/hadoop-env.sh
+Another file will open, add below code in that,
+export JAVA_HOME=/usr/lib/jvm/java-8-openjdk-amd64
+export HADOOP_CLASSPATH+=" $HADOOP_HOME/lib/*.jar"
+
+save and exit and follow below commands
+
+cd /usr/local/hadoop/lib
+
+sudo wget https://jcenter.bintray.com/javax/activation/javax.activation-api/1.2.0/javax.activation-api-1.2.0.jar
+
+cd /home/hadoop
+
+hadoop version
+
+sudo nano $HADOOP_HOME/etc/hadoop/core-site.xml
+Another file will open, add below code, 
+<configuration>
+<property>
+<name>fs.default.name</name>
+<value>hdfs://0.0.0.0:9000</value>
+<description>The default file system URI</description>
+</property>
+</configuration>                          save and exit
+
+sudo mkdir -p /home/hadoop/hdfs/{namenode,datanode}
+
+sudo chown -R hadoop:hadoop /home/hadoop/hdfs 
+
+sudo nano $HADOOP_HOME/etc/hadoop/hdfs-site.xml
+Another file will open and add below code, 
+<configuration>
+<property>
+<name>dfs.replication</name>
+<value>1</value>
+</property>
+<property>
+<name>dfs.name.dir</name>
+<value>file:///home/hadoop/hdfs/namenode</value>
+</property>
+<property>
+<name>dfs.data.dir</name>
+<value>file:///home/hadoop/hdfs/datanode</value>
+</property>
+<property>
+<name>dfs.permissions.enabled</name>
+<value>false</value>
+</property>
+</configuration>                          save and exit
+
+
+sudo nano $HADOOP_HOME/etc/hadoop/mapred-site.xml
+Another file will open and add below code, 
+<configuration>
+<property>
+<name>mapreduce.framework.name</name>
+<value>yarn</value>
+</property>
+<property>
+<name>yarn.app.mapreduce.am.env</name>
+<value>HADOOP_MAPRED_HOME=/usr/local/hadoop</value>
+<description>Change this to your hadoop location.</description>
+</property>
+<property>
+<name>mapreduce.map.env</name>
+<value>HADOOP_MAPRED_HOME=/usr/local/hadoop</value>
+<description>Change this to your hadoop location.</description>
+</property>
+<property>
+<name>mapreduce.reduce.env</name>
+<value>HADOOP_MAPRED_HOME=/usr/local/hadoop</value>
+<description>Change this to your hadoop location.</description>
+</property>
+</configuration>                      save and exit
+
+
+sudo nano $HADOOP_HOME/etc/hadoop/yarn-site.xml
+Another fill will open , add below code ,
+<configuration>
+<property>
+<name>yarn.nodemanager.aux-services</name>
+<value>mapreduce_shuffle</value>
+</property>
+</configuration>           save and exit
+
+sudo su - hadoop                    (type this command with hands)
+
+hdfs namenode -format
+
+start-dfs.sh
+
+start-yarn.sh
+
+jps
+
+You can access the Hadoop NameNode and DataNode on your browser via http://localhost:9870.
+For example:
+http://localhost:9870
+http://localhost:8088
+
