@@ -1,0 +1,37 @@
+Aim: Write a Pig Script for solving counting problems.
+
+wget https://downloads.apache.org/pig/pig-0.17.0/pig-0.17.0.tar.gz
+
+tar -xvzf pig-0.17.0.tar.gz
+
+sudo mv /home/hadoop/pig ~/
+
+nano ~/.bashrc
+Add below code,
+export PIG_HOME=/home/mohit/pig
+export PATH=$PATH:$PIG_HOME/bin
+export PIG_CLASSPATH=$HADOOP_HOME/etc/hadoop
+export JAVA_HOME=/usr/lib/jvm/java-17-openjdk-amd64
+export PATH=$JAVA_HOME/bin:$PATH
+
+source ~/.bashrc
+
+pig -version
+
+nano /home/mohit/textfile.txt
+
+hello world
+hello hadoop
+pig is powerful
+
+pig -x local
+
+lines = LOAD '/home/mohit/textfile.txt' AS (line:chararray);
+
+words = FOREACH lines GENERATE FLATTEN(TOKENIZE(line)) as word;
+
+grouped = GROUP words BY word;
+
+wordcount = FOREACH grouped GENERATE group, COUNT(words);
+
+DUMP wordcount;
