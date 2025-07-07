@@ -1,0 +1,230 @@
+Aim: Install HBase and use the HBase Data model Store and retrieve data
+
+#install hbase 
+
+## ✅ *Practical 7: Install & use HBase*
+
+---
+
+## ⚙ *Step 1: Make sure Hadoop is running*
+
+Before anything, start Hadoop daemons:
+
+bash
+start-dfs.sh
+start-yarn.sh
+
+
+---
+
+## 📦 *Step 2: Download HBase*
+
+Go to home folder:
+
+bash
+cd ~
+
+
+Download:
+
+bash
+wget https://archive.apache.org/dist/hbase/2.4.1/hbase-2.4.1-bin.tar.gz
+
+
+---
+
+## 📂 *Step 3: Extract & rename*
+
+bash
+tar -xvf hbase-2.4.1-bin.tar.gz
+mv hbase-2.4.1 hbase
+
+
+Now you should have:
+
+
+/home/hadoop/hbase
+
+
+---
+
+## ⚙ *Step 4: Set HBase environment variables*
+
+Edit .bashrc:
+
+bash
+nano ~/.bashrc
+
+
+Add at the bottom:
+
+bash
+export HBASE_HOME=/home/hadoop/hbase
+export JAVA_HOME=/usr/lib/jvm/java-8-openjdk-amd64
+export PATH=$PATH:$HBASE_HOME/bin
+
+
+Save & exit (Ctrl+O → Enter, Ctrl+X).
+
+Reload:
+
+bash
+source ~/.bashrc
+
+
+---
+
+## 🛠 *Step 5: Configure HBase*
+
+Edit hbase-env.sh:
+
+bash
+nano ~/hbase/conf/hbase-env.sh
+
+
+Add / make sure:
+
+bash
+export JAVA_HOME=/usr/lib/jvm/java-8-openjdk-amd64
+
+
+Save & exit.
+
+---
+
+Edit hbase-site.xml:
+
+bash
+nano ~/hbase/conf/hbase-site.xml
+
+
+Paste *this full content*:
+
+xml
+<configuration>
+  <property>
+    <name>hbase.rootdir</name>
+    <value>hdfs://localhost:9000/hbase</value>
+  </property>
+  <property>
+    <name>hbase.cluster.distributed</name>
+    <value>true</value>
+  </property>
+  <property>
+    <name>hbase.zookeeper.quorum</name>
+    <value>localhost</value>
+  </property>
+  <property>
+    <name>dfs.replication</name>
+    <value>1</value>
+  </property>
+  <property>
+    <name>hbase.zookeeper.property.clientPort</name>
+    <value>2181</value>
+  </property>
+  <property>
+    <name>hbase.zookeeper.property.dataDir</name>
+    <value>/home/hadoop/hbase/zookeeper</value>
+  </property>
+</configuration>
+
+
+Save & exit.
+
+---
+
+## 🚀 *Step 6: Start HBase*
+
+bash
+start-hbase.sh
+
+
+---
+
+## 🐚 *Step 7: Open HBase shell*
+
+bash
+hbase shell
+
+
+You should see:
+
+
+hbase(main):001:0>
+
+
+---
+
+## ✏ *Step 8: Store and retrieve data*
+
+✅ *Create table:*
+
+hbase
+create 'emp', 'pri_data', 'pro_data'
+
+
+---
+
+✅ *Insert data (PUT):*
+
+hbase
+put 'emp', '1', 'pri_data:name', 'Andy'
+put 'emp', '1', 'pri_data:age', '22'
+put 'emp', '1', 'pro_data:post', 'asst. manager'
+put 'emp', '1', 'pro_data:salary', '40k'
+
+put 'emp', '2', 'pri_data:name', 'Icarus'
+put 'emp', '2', 'pri_data:age', '22'
+put 'emp', '2', 'pro_data:post', 'manager'
+
+
+---
+
+✅ *Retrieve data (GET):*
+
+hbase
+get 'emp', '1'
+get 'emp', '2'
+
+
+---
+
+✅ *Scan all rows:*
+
+hbase
+scan 'emp'
+
+
+---
+
+✅ *List tables:*
+
+hbase
+list
+
+
+---
+
+✅ *Delete a cell (column-level):*
+
+hbase
+delete 'emp', '1', 'pri_data:city'
+
+
+✅ *Delete entire row:*
+
+hbase
+deleteall 'emp', '1'
+
+
+---
+
+## ✨ *Step 9: Exit HBase shell*
+
+hbase
+exit
+
+
+---
+
+🎉 *Done!*

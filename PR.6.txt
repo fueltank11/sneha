@@ -1,0 +1,85 @@
+Aim: Write a Spark code to Handle the Streaming of data.
+
+mkdir ~/networkwordcount
+
+cd ~/networkwordcount
+
+nano NetworkWordCount.scala
+Add below code,
+import org.apache.spark.SparkConf
+import org.apache.spark.streaming._
+object NetworkWordCount {
+ def main(args: Array[String]): Unit = {
+ val sparkConf = new SparkConf()
+ .setAppName("NetworkWordCount")
+ .setMaster("local[2]")
+ val ssc = new StreamingContext(sparkConf, Seconds(10))
+ val lines = ssc.socketTextStream("localhost", 9999)
+ val words = lines.flatMap(_.split(" "))
+ val wordPairs = words.map(word => (word, 1))
+ val wordCounts = wordPairs.reduceByKey(_ + _)
+ wordCounts.print()
+ ssc.start()
+ ssc.awaitTermination()
+ }
+}
+
+
+nano build.sbt
+
+Add below code,
+name := "networkwordcount"
+version := "1.0.0"
+scalaVersion := "2.12.18"
+libraryDependencies ++= Seq(
+ "org.apache.spark" %% "spark-core" % "3.4.1",
+ "org.apache.spark" %% "spark-sql" % "3.4.1",
+ "org.apache.spark" %% "spark-streaming" % "3.4.1"
+)
+
+sbt package
+
+$SPARK_HOME/sbin/start-master.sh
+
+$SPARK_HOME/sbin/start-worker.sh spark://samiksha-virtual-machine:7077
+
+
+
+
+perform this part if u want or go for below spark shell
+spark-submit \
+ --class NetworkWordCount \
+ --master spark://samiksha-virtual-machine:7077 \
+ target/scala-2.12/networkwordcount_2.12-1.0.0.jar
+
+On a separate terminal, start the netscape server
+nc -lk 9999
+
+
+
+
+OR 
+open the spark shell
+
+spark-shell
+import org.apache.spark.streaming._
+val ssc = new StreamingContext(sc, Seconds(5))
+val lines = ssc.socketTextStream("localhost", 9999)
+val words = lines.flatMap(_.split(" "))
+val wordCounts = words.map(word => (word, 1)).reduceByKey(_ + _)
+wordCounts.print()
+
+ssc.start() 
+ | ssc.awaitTermination()
+
+
+keep this spark terminal open and open another terminal, 
+
+nc -lk 9999
+
+
+type hello smaiksha
+hii sami
+
+
+enter after every line, it will get reflected on spark terminal

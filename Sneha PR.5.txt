@@ -1,0 +1,160 @@
+Aim: Write a Spark code for the given application and handle error and recovery of data
+# spark app 
+
+
+
+## ✅ *📦 Step 1: Install sbt (Scala Build Tool)*
+
+Run these one by one:
+
+bash
+sudo apt update
+sudo apt install curl -y
+sudo apt install gnupg -y
+curl -sL "https://keyserver.ubuntu.com/pks/lookup?op=get&search=0x2EE0EA64E40A89B84B2DF73499E82A75642AC823" | sudo apt-key add -
+echo "deb https://repo.scala-sbt.org/scalasbt/debian all main" | sudo tee /etc/apt/sources.list.d/sbt.list
+sudo apt update
+sudo apt install sbt -y
+
+
+---
+
+## ✅ *Step 2: Install Scala (version 2.12.18)*
+
+bash
+cd ~
+wget https://downloads.lightbend.com/scala/2.12.18/scala-2.12.18.deb
+sudo dpkg -i scala-2.12.18.deb
+
+
+---
+
+## ✅ *Step 3: Create project folder & Scala file*
+
+bash
+cd ~
+mkdir -p ExceptionHandlingProject/src/main/scala
+cd ExceptionHandlingProject/src/main/scala
+
+
+---
+
+Create Scala file:
+
+bash
+nano ExceptionHandlingTest.scala
+
+
+---
+
+Paste this code:
+
+scala
+import org.apache.spark.sql.SparkSession
+
+object ExceptionHandlingTest {
+  def main(args: Array[String]): Unit = {
+    val spark = SparkSession
+      .builder()
+      .appName("ExceptionHandlingTest")
+      .master("local[*]") // Local mode
+      .getOrCreate()
+
+    val rdd = spark.sparkContext.parallelize(0 until spark.sparkContext.defaultParallelism)
+
+    rdd.foreach { i =>
+      try {
+        if (math.random > 0.75) {
+          throw new Exception("Testing exception handling")
+        } else {
+          println(s"Task $i completed successfully")
+        }
+      } catch {
+        case e: Exception =>
+          println(s"Exception in task $i: ${e.getMessage}")
+      }
+    }
+
+    spark.stop()
+  }
+}
+
+
+Save (Ctrl+O → Enter) and exit (Ctrl+X).
+
+---
+
+## ✅ *Step 4: Go back & create sbt build file*
+
+bash
+cd ~/ExceptionHandlingProject
+nano build.sbt
+
+
+---
+
+Paste:
+
+sbt
+scalaVersion := "2.12.18"
+
+libraryDependencies ++= Seq(
+  "org.apache.spark" %% "spark-core" % "3.1.3",
+  "org.apache.spark" %% "spark-sql"  % "3.1.3"
+)
+
+
+Save & exit.
+
+---
+
+## ✅ *Step 5: Build the project*
+
+From inside ~/ExceptionHandlingProject:
+
+bash
+sbt package
+
+
+It will download dependencies (first time it may take a few minutes).
+In the end, it creates:
+
+
+target/scala-2.12/exceptionhandlingproject_2.12-0.1.0-SNAPSHOT.jar
+
+
+---
+
+## ✅ *Step 6: Start Spark (if not running)*
+
+bash
+start-dfs.sh
+start-yarn.sh
+
+
+(In this local test, even without Hadoop it would work, but good to keep running.)
+
+---
+
+## 🚀 *Step 7: Submit your job to Spark*
+
+bash
+spark-submit \
+  --class ExceptionHandlingTest \
+  --master local[*] \
+  target/scala-2.12/exceptionhandlingproject_2.12-0.1.0-SNAPSHOT.jar
+
+
+You should see output like:
+
+
+Task 0 completed successfully
+Task 1 completed successfully
+...
+Exception in task 5: Testing exception handling
+...
+
+
+---
+
+## ✅ *Done!*

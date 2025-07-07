@@ -1,0 +1,192 @@
+Aim: Implementing Map-Reduce Program for Word Count problem,
+#mapreduce
+
+sudo su - hadoop
+
+mkdir -p /home/hadoop/wordcountproblem
+cd /home/hadoop/wordcountproblem
+
+nano WC_Mapper.java
+
+
+
+package com.wordcountproblem;
+import java.io.IOException;
+import java.util.StringTokenizer;
+import org.apache.hadoop.io.IntWritable;
+import org.apache.hadoop.io.LongWritable;
+import org.apache.hadoop.io.Text;
+import org.apache.hadoop.mapred.MapReduceBase;
+import org.apache.hadoop.mapred.Mapper;
+import org.apache.hadoop.mapred.OutputCollector;
+import org.apache.hadoop.mapred.Reporter;
+/**
+ * WC_Mapper is the Mapper class for the Word Count problem.
+ * It extends MapReduceBase and implements the Mapper interface.
+ *
+ * The map method takes a line of text as input, tokenizes it into words,
+ * and emits each word along with a count of 1.
+ */
+public class WC_Mapper extends MapReduceBase implements
+ Mapper<LongWritable, Text, Text, IntWritable> {
+ // A constant IntWritable with value 1, used for counting each word occurrence.
+ private final static IntWritable one = new IntWritable(1);
+ // A Text object to hold the current word being processed.
+ private Text word = new Text();
+ /**
+ * The map method processes a single line of input text.
+ *
+ * @param key The byte offset of the current line in the input file (not used in this mapper).
+ * @param value The entire line of text as a Text object.
+ * @param output An OutputCollector to emit key-value pairs (word, 1).
+ * @param reporter A Reporter object for reporting progress and counters (not used in this 
+mapper).
+ * @throws IOException If an I/O error occurs.
+ */
+ public void map(LongWritable key, Text value,
+ OutputCollector<Text, IntWritable> output,
+
+ Reporter reporter) throws IOException {
+ // Convert the input Text value to a Java String.
+ String line = value.toString();
+ // Create a StringTokenizer to break the line into words.
+ // By default, StringTokenizer uses whitespace as delimiters.
+ StringTokenizer tokenizer = new StringTokenizer(line);
+ // Iterate through each token (word) in the line.
+ while (tokenizer.hasMoreTokens()) {
+ // Set the 'word' Text object to the current token.
+ word.set(tokenizer.nextToken());
+ // Emit the word and a count of 1 to the OutputCollector.
+ output.collect(word, one);
+ }
+ }
+}
+
+
+
+
+
+nano WC_Reducer.java
+
+package com.wordcountproblem;
+import java.io.IOException;
+import java.util.Iterator;
+import org.apache.hadoop.io.IntWritable;
+import org.apache.hadoop.io.Text;
+import org.apache.hadoop.mapred.MapReduceBase;
+import org.apache.hadoop.mapred.OutputCollector;
+import org.apache.hadoop.mapred.Reducer;
+import org.apache.hadoop.mapred.Reporter;
+/**
+ * WC_Reducer is the Reducer class for the Word Count problem.
+ * It extends MapReduceBase and implements the Reducer interface.
+ *
+ * The reduce method takes a word as a key and an iterator of counts (1s)
+ * as values. It sums these counts to get the total frequency of the word
+ * and emits the word along with its total count.
+ */
+public class WC_Reducer extends MapReduceBase implements
+ Reducer<Text, IntWritable, Text, IntWritable> {
+ /**
+ * The reduce method aggregates the counts for a given word.
+ *
+ * @param key The word (Text) whose counts are to be summed.
+ * @param values An Iterator of IntWritable objects, each representing a count of 1
+ * for the given word from the mappers.
+ * @param output An OutputCollector to emit the final word and its total count.
+ * @param reporter A Reporter object for reporting progress and counters (not used in this 
+reducer).
+ * @throws IOException If an I/O error occurs.
+ */
+ public void reduce(Text key, Iterator<IntWritable> values,
+ OutputCollector<Text, IntWritable> output,
+ Reporter reporter) throws IOException {
+ // Initialize a sum variable to accumulate the counts for the current word.
+ int sum = 0;
+ // Iterate through all the IntWritable values (which are all '1's from the mappers)
+ // associated with the current word (key).
+ while (values.hasNext()) {
+ // Get the integer value from the current IntWritable and add it to the sum.
+ sum += values.next().get();
+ }
+ // After summing all the counts for the word, emit the word (key)
+ // and its total count (sum) as a new IntWritable object.
+ output.collect(key, new IntWritable(sum));
+ }
+}
+
+
+
+
+
+
+nano WC_Runner.java
+
+package com.wordcountproblem;
+import java.io.IOException;
+import org.apache.hadoop.fs.Path;
+import org.apache.hadoop.io.IntWritable;
+import org.apache.hadoop.io.Text;
+import org.apache.hadoop.mapred.FileInputFormat;
+import org.apache.hadoop.mapred.FileOutputFormat;
+import org.apache.hadoop.mapred.JobClient;
+import org.apache.hadoop.mapred.JobConf;
+import org.apache.hadoop.mapred.TextInputFormat;
+import org.apache.hadoop.mapred.TextOutputFormat;
+public class WC_Runner {
+public static void main(String[] args) throws IOException{
+JobConf conf = new JobConf(WC_Runner.class);
+conf.setJobName("WordCount");
+conf.setOutputKeyClass(Text.class);
+conf.setOutputValueClass(IntWritable.class);
+conf.setMapperClass(WC_Mapper.class);
+conf.setCombinerClass(WC_Reducer.class);
+conf.setReducerClass(WC_Reducer.class);
+conf.setInputFormat(TextInputFormat.class);
+conf.setOutputFormat(TextOutputFormat.class);
+FileInputFormat.setInputPaths(conf,new Path(args[0]));
+FileOutputFormat.setOutputPath(conf,new Path(args[1]));
+JobClient.runJob(conf);
+}
+}
+
+ls /home/hadoop/wordcountproblem
+
+
+Step 3: Create output folder for classe
+mkdir -p /home/hadoop/wordcountclasses
+
+Step 4: Compile Java files
+cd /home/hadoop/wordcountproblem
+
+ls $HADOOP_HOME/share/hadoop/common/
+ls $HADOOP_HOME/share/hadoop/mapreduce/
+
+
+javac -classpath $HADOOP_HOME/share/hadoop/common/hadoop-common-3.1.1.jar:$HADOOP_HOME/share/hadoop/mapreduce/hadoop-mapreduce-client-core-3.1.1.jar \
+-d /home/hadoop/wordcountclasses \
+WC_Mapper.java WC_Reducer.java WC_Runner.java
+
+cd /home/hadoop/wordcountclasses
+jar -cvf /home/hadoop/wordcountproblem.jar com/
+
+
+nano /home/hadoop/data.txt
+
+hello world
+hello hadoop
+
+Step 7: Start Hadoop & Yarn
+start-dfs.sh
+start-yarn.sh
+
+Step 8: Upload file to HDFS
+hdfs dfs -mkdir /test
+hdfs dfs -put /home/hadoop/data.txt /test/data.txt
+
+Step 9: Run MapReduce job
+
+hadoop jar /home/hadoop/wordcountproblem.jar com.wordcountproblem.WC_Runner /test/data.txt /r_output
+
+Step 10: View output
+hdfs dfs -cat /r_output/part-00000

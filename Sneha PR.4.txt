@@ -1,0 +1,178 @@
+Aim: Download and install Spark. Create Graphical data and access the graphical data using Spark
+#install spark 
+
+
+sudo su - hadoop
+
+Perfect! Let’s do it *step by step from scratch*, very cleanly, like a fresh install.
+I’ll assume you are on your Ubuntu VM as user hadoop.
+
+Copy-paste these *exact commands* carefully, one by one:
+
+---
+
+## 🛠 *🧹 Step 0: Clean up old Spark (if you have it)*
+
+bash
+cd ~
+rm -rf spark*
+
+
+This removes any old Spark folders and tgz files.
+
+---
+
+## ✅ *Step 1: Download Spark 3.1.3 (works with Java 8)*
+
+bash
+wget https://archive.apache.org/dist/spark/spark-3.1.3/spark-3.1.3-bin-hadoop3.2.tgz
+
+
+
+---
+
+## 📦 *Step 2: Extract it*
+
+bash
+tar -xzf spark-3.1.3-bin-hadoop3.2.tgz
+mv spark-3.1.3-bin-hadoop3.2 spark
+
+
+
+---
+
+## 📂 *Step 3: Rename the extracted folder to a simple name*
+
+
+Now you should have:
+
+
+/home/hadoop/spark
+
+
+---
+
+## ⚙ *Step 4: Set environment variables*
+
+Edit:
+
+bash
+nano ~/.bashrc
+
+
+Scroll to the bottom and add these lines:
+
+bash
+export JAVA_HOME=/usr/lib/jvm/java-8-openjdk-amd64
+export PATH=$JAVA_HOME/bin:$PATH
+export SPARK_HOME=~/spark
+export PATH=$SPARK_HOME/bin:$PATH
+
+
+Save (Ctrl+O → Enter) and exit (Ctrl+X).
+
+---
+
+## 🔄 *Step 5: Reload .bashrc*
+
+bash
+source ~/.bashrc
+
+
+---
+
+## 🔍 *Step 6: Check Java is set correctly*
+
+bash
+echo $JAVA_HOME
+
+
+It should print:
+
+
+/usr/lib/jvm/java-8-openjdk-amd64
+
+
+If not, tell me.
+
+---
+
+## 🚀 *Step 7: Start Spark shell*
+
+bash
+spark-shell
+
+
+You should see the Scala REPL prompt:
+
+
+scala>
+
+
+To exit, type:
+
+scala
+:quit
+
+Step 1: Import GraphX
+import org.apache.spark.graphx._
+
+
+✅ Step 2: Create a custom data type for users
+case class User(name: String, age: Int)
+
+
+✅ Step 3: Create the user data
+
+val users = List(
+  (1L, User("Alex", 26)), (2L, User("Bill", 42)), (3L, User("Carol", 18)),
+  (4L, User("Dave", 16)), (5L, User("Eve", 45)), (6L, User("Farell", 30)),
+  (7L, User("Garry", 32)), (8L, User("Harry", 36)), (9L, User("Ivan", 28)), (10L, User("Jill", 48))
+)
+
+ Step 4: Convert users list to an RDD
+val usersRDD = sc.parallelize(users)
+
+
+Step 5: Create edge data (follow relationships)
+val follows = List(
+  Edge(1L, 2L, 1), Edge(2L, 3L, 1), Edge(3L, 1L, 1), Edge(3L, 4L, 1), Edge(3L, 5L, 1),
+  Edge(4L, 5L, 1), Edge(6L, 5L, 1), Edge(7L, 6L, 1), Edge(6L, 8L, 1), Edge(7L, 8L, 1),
+  Edge(7L, 9L, 1), Edge(9L, 8L, 1), Edge(8L, 10L, 1), Edge(10L, 9L, 1), Edge(1L, 1L, 1)
+)
+
+ Step 6: Convert edges list to an RDD
+val followsRDD = sc.parallelize(follows)
+
+
+ Step 7: Create a default user (needed by GraphX)
+val defaultUser = User("Icarus", 22)
+
+ Step 8: Create the graph
+
+val socialGraph = Graph(usersRDD, followsRDD, defaultUser)
+
+
+
+Step 9: Access data from the graph
+
+
+Number of edges:
+
+socialGraph.numEdges
+
+Number of vertices:
+
+socialGraph.numVertices
+
+In-degrees (number of followers each user has):
+
+socialGraph.inDegrees.collect
+
+Out-degrees (number of people each user follows):
+
+socialGraph.outDegrees.collect
+
+
+ Step 10: Exit the shell
+:quit
